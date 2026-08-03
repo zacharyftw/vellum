@@ -1,0 +1,24 @@
+[package]
+name = "vellum_invoice_registry"
+version = "0.1.0"
+edition = "2024_07"
+
+[dependencies]
+starknet = "2.18.0"
+
+[dev-dependencies]
+# Must track the installed `snforge` binary exactly — see `.tool-versions`, and
+# the preflight check in `scripts/check-cairo-toolchain.ts` that enforces it.
+# The cheatcodes cross a raw buffer with no version negotiation, so a mismatch
+# still compiles and only shows up as "Reading from buffer failed" at runtime.
+snforge_std = "0.62.1"
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+
+[scripts]
+test = "snforge test"
+
+[tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
