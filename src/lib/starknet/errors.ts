@@ -63,6 +63,13 @@ const TRANSLATIONS: Record<string, Translation> = {
   TOKEN_MISMATCH: {
     message: "This payment referenced the wrong token.",
   },
+  ALREADY_ANCHORED: {
+    message: "This invoice's commitment is already anchored on-chain.",
+    action: "There is nothing more to do — it can already be disclosed to an auditor.",
+  },
+  ALREADY_PAID: {
+    message: "This invoice was already marked paid on-chain.",
+  },
 };
 
 /** Wallet rejections are not failures worth alarming anyone about. */

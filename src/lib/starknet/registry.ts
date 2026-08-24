@@ -14,7 +14,7 @@
  * that renders ignorance as evidence is the failure this module is here to
  * prevent.
  */
-import { CallData, num } from "starknet";
+import { CallData, num, type Call } from "starknet";
 
 import { hasRegistry, isProviderConfigured, providerFor, type NetworkConfig } from "./networks";
 
@@ -104,6 +104,26 @@ export async function readAnchor(
 /** Whether a lookup actually establishes anything about the chain's contents. */
 export function isChainEvidence(lookup: AnchorLookup): boolean {
   return lookup.status === "found" || lookup.status === "absent";
+}
+
+/**
+ * Build the call that fixes an invoice's commitment ahead of payment.
+ *
+ * Mirrors `IInvoiceRegistry::anchor_invoice` in `cairo/src/lib.cairo`. Unlike
+ * settlement, this is an ordinary public invoke — not a privacy-pool action —
+ * so it goes through the connected wallet's plain `execute`, not
+ * `strk20InvokeTransaction`. See `submitInvoke` in `./submit`.
+ */
+export function anchorInvoiceCall(
+  network: NetworkConfig,
+  invoiceId: string,
+  commitment: string,
+): Call {
+  return {
+    contractAddress: network.registryAddress,
+    entrypoint: "anchor_invoice",
+    calldata: CallData.compile([num.toHex(invoiceId), num.toHex(commitment)]),
+  };
 }
 
 /** Numeric felt comparison — `0x0a…` and `0xa…` are the same value. */

@@ -6,7 +6,7 @@
  * generous — a timeout here means "we stopped watching", never "it failed",
  * and the caller is told which of the two happened.
  */
-import type { WalletAccountV6 } from "starknet";
+import type { Call, WalletAccountV6 } from "starknet";
 import { num } from "starknet";
 
 import { formatAmount, prettyStatus } from "./format";
@@ -69,34 +69,15 @@ function toMessage(error: unknown): string {
 }
 
 /**
- * Submit a batch and watch it to completion, reporting each phase.
- *
- * `onPhase` fires on every transition so the UI can show the tx hash while the
- * proof is still being verified, rather than a spinner with nothing behind it.
+ * Wait for a submitted transaction and report its outcome. Shared by every
+ * submit path below — a batched STRK20 action and a plain invoke differ only
+ * in how the transaction gets sent, never in how it's watched afterward.
  */
-export async function submitStrk20(
-  walletAccount: WalletAccountV6,
+async function watchReceipt(
   network: NetworkConfig,
-  actions: Strk20Action[],
-  onPhase?: (settlement: Settlement) => void,
+  txHash: string,
+  report: (settlement: Settlement) => Settlement,
 ): Promise<Settlement> {
-  const report = (settlement: Settlement): Settlement => {
-    onPhase?.(settlement);
-    return settlement;
-  };
-
-  report({ phase: "signing" });
-
-  let txHash: string;
-  try {
-    const submitted = await walletAccount.strk20InvokeTransaction(actions);
-    txHash = submitted.transaction_hash;
-  } catch (error) {
-    return report({ phase: "failed", message: toMessage(error) });
-  }
-
-  report({ phase: "pending", txHash });
-
   try {
     const receipt = unwrapReceipt(
       await providerFor(network.key).waitForTransaction(txHash, {
@@ -125,4 +106,65 @@ export async function submitStrk20(
       message: toMessage(error),
     });
   }
+}
+
+/**
+ * Submit a batch and watch it to completion, reporting each phase.
+ *
+ * `onPhase` fires on every transition so the UI can show the tx hash while the
+ * proof is still being verified, rather than a spinner with nothing behind it.
+ */
+export async function submitStrk20(
+  walletAccount: WalletAccountV6,
+  network: NetworkConfig,
+  actions: Strk20Action[],
+  onPhase?: (settlement: Settlement) => void,
+): Promise<Settlement> {
+  const report = (settlement: Settlement): Settlement => {
+    onPhase?.(settlement);
+    return settlement;
+  };
+
+  report({ phase: "signing" });
+
+  let txHash: string;
+  try {
+    const submitted = await walletAccount.strk20InvokeTransaction(actions);
+    txHash = submitted.transaction_hash;
+  } catch (error) {
+    return report({ phase: "failed", message: toMessage(error) });
+  }
+
+  report({ phase: "pending", txHash });
+  return watchReceipt(network, txHash, report);
+}
+
+/**
+ * Submit an ordinary contract call — not a privacy-pool action — and watch it
+ * to completion. Used for `anchor_invoice`: an ordinary public invoke that
+ * never goes through `strk20InvokeTransaction`.
+ */
+export async function submitInvoke(
+  walletAccount: WalletAccountV6,
+  network: NetworkConfig,
+  calls: Call | Call[],
+  onPhase?: (settlement: Settlement) => void,
+): Promise<Settlement> {
+  const report = (settlement: Settlement): Settlement => {
+    onPhase?.(settlement);
+    return settlement;
+  };
+
+  report({ phase: "signing" });
+
+  let txHash: string;
+  try {
+    const submitted = await walletAccount.execute(calls);
+    txHash = submitted.transaction_hash;
+  } catch (error) {
+    return report({ phase: "failed", message: toMessage(error) });
+  }
+
+  report({ phase: "pending", txHash });
+  return watchReceipt(network, txHash, report);
 }

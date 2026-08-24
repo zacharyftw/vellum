@@ -21,6 +21,7 @@ import { MUTED_LINK, TEXT_LINK } from "@/lib/springs/interaction";
 import { formatAmountPretty, shortHex } from "@/lib/starknet/format";
 import { NETWORKS } from "@/lib/starknet/networks";
 
+import { AnchorAction } from "./anchor-action";
 import type { DashboardRow } from "./use-dashboard";
 
 const HEAD_CLASS =
@@ -113,15 +114,24 @@ const InvoiceRow = ({
       )}
 
       <td className={`${CELL_CLASS} text-right`}>
-        <RowActions
-          id={entry.id}
-          href={buildInvoiceLink(
-            typeof window !== "undefined" ? window.location.origin : "",
-            entry.id,
-            entry.key,
-          )}
-          onForget={onForget}
-        />
+        <div className="flex flex-col items-end gap-hud-tight">
+          {row.status === "ready" && entry.role === "issuer" ? (
+            <AnchorAction
+              invoice={row.invoice}
+              network={entry.network}
+              isPaid={Boolean(row.stored.settlementTxHash)}
+            />
+          ) : null}
+          <RowActions
+            id={entry.id}
+            href={buildInvoiceLink(
+              typeof window !== "undefined" ? window.location.origin : "",
+              entry.id,
+              entry.key,
+            )}
+            onForget={onForget}
+          />
+        </div>
       </td>
     </tr>
   );

@@ -13,6 +13,7 @@
     "test:e2e": "bun scripts/e2e-invoice.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
+    "check:pool": "bun scripts/verify-pool-config.ts",
     "cairo:check": "bun scripts/check-cairo-toolchain.ts",
     "cairo:build": "bun run cairo:check && cd cairo && scarb build",
     "cairo:test": "bun run cairo:check && cd cairo && snforge test"

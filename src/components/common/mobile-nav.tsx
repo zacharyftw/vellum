@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 import { PressableButton, PressableLink } from "@/components/ui/pressable";
 import { SPRING_SOFT } from "@/lib/springs/config";
-import { GHOST, NAV_LINK, QUIET } from "@/lib/springs/interaction";
+import { NAV_LINK, QUIET } from "@/lib/springs/interaction";
 
 export interface MobileNavItem {
   label: string;
@@ -109,16 +109,6 @@ export const MobileNav = ({ items }: MobileNavProps) => {
               {item.label}
             </PressableLink>
           ))}
-
-          <PressableLink
-            href="/#contact"
-            onClick={() => setOpen(false)}
-            interaction={GHOST}
-            className="mt-[0.75rem] flex items-center justify-center gap-[0.5rem] border px-[1.111rem] py-[0.75rem] font-general text-[1rem] leading-[1.2]"
-          >
-            Contact Us
-            <span aria-hidden className="block size-[0.1875rem] bg-current" />
-          </PressableLink>
         </animated.nav>
       )}
     </div>
